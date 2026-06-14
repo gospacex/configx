@@ -1,0 +1,48 @@
+2026-05-28T00:59:00.567+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T00:59:44.886+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:00:16.323+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:00:19.332+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:00:22.336+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:05:56.493+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:05:56.504+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:05:56.508+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:05:56.509+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:05:56.509+0800	[31mERROR[0m	config_client/config_client.go:202	get config from server error:[404] config data not exist
+ 
+2026-05-28T01:05:56.510+0800	[33mWARN[0m	config_client/config_client.go:207	[client.GetConfig] config not found, dataId: __health_check__, group: product, namespaceId: 42e5c989-ffe9-40b8-92aa-44b0e9ab83ec.
+2026-05-28T01:06:18.014+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:06:21.016+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:06:21.022+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:06:21.026+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:06:21.028+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:06:21.028+0800	[31mERROR[0m	config_client/config_client.go:202	get config from server error:[404] config data not exist
+ 
+2026-05-28T01:06:21.028+0800	[33mWARN[0m	config_client/config_client.go:207	[client.GetConfig] config not found, dataId: __health_check__, group: product, namespaceId: 42e5c989-ffe9-40b8-92aa-44b0e9ab83ec.
+2026-05-28T01:17:36.157+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:17:39.163+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:17:42.166+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>
+2026-05-28T01:17:42.174+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:17:42.177+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:17:42.178+0800	[31mERROR[0m	nacos_server/nacos_server.go:199	api</v1/cs/configs>,method:<GET>, params:<{"dataId":"__health_check__","group":"product","tenant":"42e5c989-ffe9-40b8-92aa-44b0e9ab83ec"}>, call domain error:<[404] config data not exist
+> , result:<config data not exist
+>
+2026-05-28T01:17:42.179+0800	[31mERROR[0m	config_client/config_client.go:202	get config from server error:[404] config data not exist
+ 
+2026-05-28T01:17:42.179+0800	[33mWARN[0m	config_client/config_client.go:207	[client.GetConfig] config not found, dataId: __health_check__, group: product, namespaceId: 42e5c989-ffe9-40b8-92aa-44b0e9ab83ec.
+2026-05-28T01:17:42.182+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:</Users/hyx/work/gowork/src/gospacex/configx/log>   cacheDir:</Users/hyx/work/gowork/src/gospacex/configx/cache>

@@ -1,0 +1,19 @@
+server:
+  host: 0.0.0.0
+  port: 8001
+
+database:
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  password: 123456
+  database: gospacex
+
+alipay:
+  app_id: 9021000123613685
+  private_key: YOUR_PRIVATE_KEY
+  public_key: YOUR_PUBLIC_KEY
+  notify_url: http://hd263ba3.natappfree.cc/notify
+  return_url: http://hd263ba3.natappfree.cc/return
+  is_production: false
+  product_code: FAST_INSTANT_TRADE_PAY
