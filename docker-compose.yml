@@ -1,0 +1,95 @@
+# configx - Config Center Docker Compose
+# Nacos + Apollo 共享 MySQL（Nacos 元数据 + Apollo 配置库）
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # ===== MySQL（Nacos + Apollo 共享）=====
+  mysql:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/mysql:8.4
+    cpus: "0.5"
+    container_name: hubx-config-mysql
+    ports:
+      - "3306:3306"
+    command:
+      - --sql-mode=ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    volumes:
+      - ./data/mysql/init:/docker-entrypoint-initdb.d
+      - ./data/mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+    restart: unless-stopped
+    logging: *default-logging
+
+  # ===== Nacos（远程配置中心，使用 MySQL 持久化）=====
+  nacos:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nacos/nacos-server:v2.4.2
+    cpus: "0.5"
+    container_name: hubx-nacos
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: nacos
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: rootpass
+      JVM_XMS: 512m
+      JVM_XMX: 512m
+      JVM_XMN: 256m
+      NACOS_APPLICATION_PORT: 8848
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    mem_limit: 1g
+    restart: unless-stopped
+    logging: *default-logging
+
+  # ===== Apollo（远程配置中心）=====
+  # Apollo QuickStart 启动时自动初始化 ApolloConfigDB / ApolloPortalDB schema
+  apollo:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nobodyiam/apollo-quick-start:2.4.0
+    cpus: "0.5"
+    container_name: hubx-apollo
+    ports:
+      - "8070:8070"
+      - "8085:8080"
+    environment:
+      APOLLO_CONFIG_DB_URL: jdbc:mysql://mysql:3306/ApolloConfigDB?characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      APOLLO_CONFIG_DB_USERNAME: root
+      APOLLO_CONFIG_DB_PASSWORD: rootpass
+      APOLLO_PORTAL_DB_URL: jdbc:mysql://mysql:3306/ApolloPortalDB?characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      APOLLO_PORTAL_DB_USERNAME: root
+      APOLLO_PORTAL_DB_PASSWORD: rootpass
+      JAVA_OPTS: "-Xms256m -Xmx512m -Dspring.jpa.hibernate.ddl-auto=update -Dspring.sql.init.mode=always"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    mem_limit: 512m
+    restart: unless-stopped
+    logging: *default-logging
+
+networks:
+  default:
+    name: hubx-configx-net
+    driver: bridge

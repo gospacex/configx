@@ -1,0 +1,356 @@
+# ============================================================
+# HubX 企业级配置文件
+# 适用于生产环境，包含完整中间件配置
+# ============================================================
+
+# ===== 应用配置 =====
+app:
+  name: myapp
+  version: 1.0.0
+  env: production
+
+# ===== 调用链统一开关（全局总闸）=====
+# traceflag.enabled 是所有 x 系列 SDK 调用链的全局总闸：
+# 缺省不写 = 放行（opt-out）；显式 enabled: false = 一键熔断全部组件。
+# 各 SDK 段级/实例级开关键一律 enable_trace（详见各段）。
+traceflag:
+  enabled: true
+
+# ===== 配置中心（远程配置）=====
+configx:
+  remote:
+    enabled: true
+    provider: nacos
+    nacos:
+      server_configs:
+        - ip: nacos-1.internal.com
+          port: 8848
+        - ip: nacos-2.internal.com
+          port: 8848
+        - ip: nacos-3.internal.com
+          port: 8848
+      namespace_id: "production"
+      group: "DEFAULT_GROUP"
+      data_id: "myapp-production"
+      cluster_name: "default"
+      username: "${NACOS_USERNAME}"
+      password: "${NACOS_PASSWORD}"
+      refresh_interval: 30s
+
+# ===== 日志配置 =====
+logx:
+  level: info
+  format: json
+  output: file
+  file_path: /var/log/myapp/app.log
+  max_size: 100
+  max_backups: 30
+  max_age: 30
+  compress: true
+  otel:
+    # 调用链开关键统一为 enable_trace（enabled 为旧键，保留为兼容别名）
+    enable_trace: true
+    exporter: mq
+    jaeger:
+      endpoint: "http://jaeger-collector:14268/api/traces"
+    mq:
+      driver: kafka
+      brokers:
+        - "kafka-1:9092"
+        - "kafka-2:9092"
+        - "kafka-3:9092"
+      topic: "otel-logs"
+      kafka:
+        client_id: "myapp-otel"
+        batch_size: 100
+        batch_timeout: 5s
+        required_acks: all
+        compression: snappy
+        max_retries: 3
+
+# ===== x 系列中间件配置 =====
+xmiddleware:
+
+  # ----- sqlx（SQL 数据库）-----
+  sqlx:
+    driver: gorm
+    databases:
+      default:
+        dsn: "${MYSQL_DSN}"
+        max_open_conns: 200
+        max_idle_conns: 50
+        conn_max_lifetime: 5m
+        conn_max_idle_time: 3m
+        slow_threshold: 200ms
+        enable_log: true
+        log_level: warn
+        enable_trace: true
+        retry:
+          enabled: true
+          max_attempts: 3
+          initial_delay: 1s
+          max_delay: 10s
+          multiplier: 2.0
+        health_check:
+          enabled: true
+          interval: 30s
+          timeout: 5s
+      read_replica:
+        dsn: "${MYSQL_READ_DSN}"
+        max_open_conns: 100
+        max_idle_conns: 25
+        conn_max_lifetime: 5m
+        conn_max_idle_time: 3m
+
+  # ----- cachex（缓存）-----
+  cachex:
+    driver: redis
+    instances:
+      default:
+        addr: "${REDIS_ADDR}"
+        password: "${REDIS_PASSWORD}"
+        db: 0
+        pool_size: 200
+        min_idle_conns: 20
+        pool_timeout: 30s
+        idle_timeout: 5m
+        max_retries: 3
+        dial_timeout: 5s
+        read_timeout: 3s
+        write_timeout: 3s
+        tls:
+          enabled: true
+          ca_file: "/etc/ssl/certs/ca-certificates.crt"
+          cert_file: "/etc/ssl/certs/client.crt"
+          key_file: "/etc/ssl/certs/client.key"
+        sentinel:
+          enabled: true
+          master_name: "mymaster"
+          addrs:
+            - "sentinel-1:26379"
+            - "sentinel-2:26379"
+            - "sentinel-3:26379"
+        slow_threshold: 100ms
+        enable_trace: true
+        health_check:
+          enabled: true
+          interval: 30s
+          timeout: 5s
+
+  # ----- mqx（消息队列）-----
+  mqx:
+    driver: kafka
+    instances:
+      default:
+        brokers:
+          - "kafka-1:9092"
+          - "kafka-2:9092"
+          - "kafka-3:9092"
+        # 调用链开关键统一为 enable_trace（实例级）；
+        # call_chain_enabled 为旧键，保留为兼容别名（主键缺失时才回退）
+        call_chain_enabled: true
+        call_chain_exporter: "http://jaeger-collector:14268/api/traces"
+        producer:
+          topic: "default"
+          batch_size: 100
+          batch_timeout: 10ms
+          max_retries: 3
+          retry_backoff: 100ms
+          required_acks: all
+          compression: snappy
+        consumer:
+          group_id: "myapp-group"
+          topics:
+            - "default"
+          auto_commit: true
+          max_concurrency: 10
+          min_fetch_size: 1
+          max_fetch_size: 1048576
+          session_timeout: 30s
+          heartbeat_interval: 10s
+        tls:
+          enabled: true
+        enable_trace: true
+
+  # ----- coordx（服务协调）-----
+  coordx:
+    driver: nacos
+    instances:
+      default:
+        server_configs:
+          - ip: nacos-1.internal.com
+            port: 8848
+          - ip: nacos-2.internal.com
+            port: 8848
+        namespace_id: "production"
+        group: "DEFAULT_GROUP"
+        retry:
+          enabled: true
+          max_attempts: 5
+          initial_delay: 1s
+          max_delay: 30s
+          multiplier: 2.0
+        heartbeat:
+          enabled: true
+          interval: 10s
+        enable_trace: true
+
+  # ----- lockx（分布式锁）-----
+  lockx:
+    driver: redis
+    instances:
+      default:
+        reuse: "cachex.default"
+        expiry: 10s
+        retries: 3
+        retry_delay: 100ms
+        watchdog:
+          enabled: true
+          interval: 3s
+        health_check:
+          enabled: true
+          interval: 30s
+
+  # ----- configx（配置中心）-----
+  configx:
+    driver: nacos
+    instances:
+      default:
+        server_configs:
+          - ip: nacos-1.internal.com
+            port: 8848
+        namespace_id: "production"
+        group: "DEFAULT_GROUP"
+        data_id: "myapp"
+        watch: true
+        watch_interval: 30s
+
+  # ----- otelx（可观测性）-----
+  # 代码契约：otelx 段为扁平结构（service_name / tracer / meter / sampler），
+  # 调用链开关键统一为 enable_trace（tracer.enabled 为旧键，保留为兼容别名）
+  otelx:
+    service_name: "myapp"
+    service_version: "1.0.0"
+    environment: "production"
+    tracer:
+      enable_trace: true
+      exported: "otlp"
+      endpoint: "otel-collector:4317"
+      protocol: "grpc"
+      timeout: 10s
+      insecure: false
+    meter:
+      enabled: true
+      interval: 15
+    sampler:
+      type: "parentbased"
+      ratio: 0.1
+      parent: false
+
+  # ----- searchx（搜索引擎）-----
+  searchx:
+    driver: elasticsearch
+    instances:
+      default:
+        addresses:
+          - "http://es-1:9200"
+          - "http://es-2:9200"
+          - "http://es-3:9200"
+        username: "${ES_USERNAME}"
+        password: "${ES_PASSWORD}"
+        max_idle_conns: 20
+        idle_timeout: 5m
+        dial_timeout: 5s
+        read_timeout: 10s
+        write_timeout: 10s
+        retry:
+          enabled: true
+          max_attempts: 3
+          initial_delay: 500ms
+        tls:
+          enabled: true
+        enable_trace: true
+
+  # ----- objectx（对象存储）-----
+  objectx:
+    driver: minio
+    instances:
+      default:
+        endpoint: "minio.internal.com:9000"
+        access_key: "${MINIO_ACCESS_KEY}"
+        secret_key: "${MINIO_SECRET_KEY}"
+        use_ssl: true
+        bucket: "myapp"
+        max_idle_conns: 20
+        idle_timeout: 5m
+        retry:
+          enabled: true
+          max_attempts: 3
+        max_upload_size: 100MB
+        presigned_expiry: 1h
+        enable_trace: true
+
+  # ----- docx（文档数据库）-----
+  docx:
+    driver: mongodb
+    instances:
+      default:
+        uri: "${MONGODB_URI}"
+        database: "myapp"
+        max_pool_size: 200
+        min_pool_size: 20
+        max_conn_idle_time: 5m
+        connect_timeout: 10s
+        socket_timeout: 30s
+        retry:
+          enabled: true
+          max_attempts: 3
+          initial_delay: 1s
+        read_preference: "secondaryPreferred"
+        write_concern: "majority"
+        enable_trace: true
+
+  # ----- kvx（KV 存储）-----
+  kvx:
+    driver: etcd
+    instances:
+      default:
+        endpoints:
+          - "etcd-1:2379"
+          - "etcd-2:2379"
+          - "etcd-3:2379"
+        dial_timeout: 5s
+        tls:
+          enabled: true
+        session:
+          ttl: 30s
+          keep_alive: 10s
+        enable_trace: true
+
+  # ----- vectorx（向量数据库）-----
+  vectorx:
+    driver: milvus
+    instances:
+      default:
+        address: "milvus:19530"
+        pool_size: 20
+        dial_timeout: 5s
+        tls:
+          enabled: true
+        enable_trace: true
+
+  # ----- protocolx（协议）-----
+  protocolx:
+    driver: http
+    instances:
+      default:
+        timeout: 30s
+        max_idle_conns: 100
+        idle_conn_timeout: 90s
+        retry:
+          enabled: true
+          max_attempts: 3
+        circuit_breaker:
+          enabled: true
+          threshold: 5
+          timeout: 30s

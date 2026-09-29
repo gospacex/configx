@@ -1,0 +1,106 @@
+# configx example 配置文件
+# 通过 configx.remote.enabled 开关控制是否连接 nacos
+
+app:
+  name: myapp
+  version: 1.0.0
+  env: development
+
+# ===== 配置中心开关 =====
+# enabled: false → 仅读本地 viper
+# enabled: true  → 连接 nacos，nacos 配置覆盖本地
+configx:
+  remote:
+    enabled: false          # ← 开关：改为 true 即连接 nacos
+    provider: nacos
+    nacos:
+      # ---- 单机模式 ----
+      server_configs:
+        - ip: 127.0.0.1
+          port: 8848
+      # ---- 集群模式（取消注释）----
+      # server_configs:
+      #   - ip: nacos-1.prod.com
+      #     port: 8848
+      #   - ip: nacos-2.prod.com
+      #     port: 8848
+      #   - ip: nacos-3.prod.com
+      #     port: 8848
+      namespace_id: ""
+      group: "DEFAULT_GROUP"
+      data_id: "myapp"
+      refresh_interval: 30s
+
+logx:
+  level: debug
+  format: console
+  output: stdout
+  file_path: ./logs/app.log
+  max_size: 50
+  max_backups: 3
+  max_age: 7
+  compress: false
+  otel:
+    enabled: false
+
+xmiddleware:
+  sqlx:
+    driver: gorm
+    databases:
+      default:
+        dsn: "root:rootpass@tcp(localhost:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
+        max_open_conns: 100
+        max_idle_conns: 25
+        conn_max_lifetime: 5m
+        conn_max_idle_time: 3m
+        slow_threshold: 200ms
+        enable_log: true
+        log_level: debug
+        enable_trace: false
+
+  cachex:
+    driver: redis
+    tracing:
+      enabled: true
+    instances:
+      - name: redis-primary
+        driver: redis
+        addr: "localhost:6379"
+        password: "redis123456"
+        db: 0
+        pool_size: 20
+        min_idle_conn: 5
+        timeout: 5s
+        read_timeout: 3s
+        write_timeout: 3s
+        tls_enabled: false
+        slow_threshold: 100ms
+        enable_trace: true
+
+  mqx:
+    driver: kafka
+    instances:
+      default:
+        brokers:
+          - "localhost:9092"
+        max_idle_conns: 10
+        idle_timeout: 5m
+        producer:
+          topic: "default"
+          batch_size: 100
+          batch_timeout: 10ms
+          max_retries: 3
+          retry_backoff: 100ms
+          required_acks: 1
+          compression: none
+        consumer:
+          group_id: "myapp-group"
+          topics:
+            - "default"
+          auto_commit: true
+          max_concurrency: 5
+          session_timeout: 30s
+          heartbeat_interval: 10s
+        tls:
+          enabled: false
+        enable_trace: false
