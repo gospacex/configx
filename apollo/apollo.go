@@ -65,12 +65,26 @@ func New(cfg *ApolloConfig) (*Config, error) {
 		return nil, startErr
 	}
 
-	// 获取初始配置
+	// 命名空间兜底：空命名空间按 apollo 约定落到 application
 	ns := cfg.Namespace
 	if ns == "" {
 		ns = "application"
 	}
-	content := client.GetNameSpaceContent(ns, "")
+
+	// 获取初始配置。
+	// GetNameSpaceContent 与 Start 一样要防 panic：apollo.v0 的 client 在
+	// server 不可达时内部状态可能不完整（实测 Start 静默通过、随后在
+	// GetStringValueWithNameSpace 里 nil deref，见
+	// TestReadApolloConfigFromLocal_WithServerConfigs 的复现）。库的 bug
+	// 修不了，但不能让配置中心不可达演变成 panic 炸进程。
+	//
+	// 空内容同样视为失败：调用方显式启用 remote 就是要拿远程配置，一个字都
+	// 拉不到属于故障；静默退回空配置会让服务带着空地址启动，比启动失败更
+	// 难排查（launchx 的 strict 语义同此：起了但配错 > 起不来）。
+	content, err := getInitialContent(client, ns)
+	if err != nil {
+		return nil, fmt.Errorf("apollo: namespace %q: %w", ns, err)
+	}
 
 	// 解析配置
 	data, err := parseConfig(content, ns)
@@ -361,6 +375,26 @@ func (c *Config) Close() error {
 	c.watchers = nil
 	_ = c.client.Stop()
 	return nil
+}
+
+// getInitialContent 拉取命名空间的初始内容，带 panic 防护与空内容判定。
+//
+// 为什么单独拆出来而不是内联在 New 里：New 已经有一个 recover 段（护
+// client.Start），再套一层嵌套 defer 会把两个失败路径搅在一起；拆开后
+// "拉取失败"有独立的错误语义（fetch failed），与"启动失败"（start failed）
+// 在日志里可区分。
+func getInitialContent(client *apollo.Client, ns string) (content string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			content = ""
+			err = fmt.Errorf("apollo client panicked while fetching %q: %v", ns, r)
+		}
+	}()
+	content = client.GetNameSpaceContent(ns, "")
+	if content == "" {
+		return "", fmt.Errorf("empty content: apollo server unreachable or namespace %q not published", ns)
+	}
+	return content, nil
 }
 
 // ApolloConfig Apollo 配置选项
